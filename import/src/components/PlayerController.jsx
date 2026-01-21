@@ -1460,7 +1460,26 @@ export default function PlayerController({ onPlaylistSelect, onVideoSelect, acti
     orbSpill, setOrbSpill,
     // Quick Assign/Shuffle (From Config Store)
     quickAssignColor, setQuickAssignColor,
-    quickShuffleColor, setQuickShuffleColor
+    quickShuffleColor, setQuickShuffleColor,
+
+    // Audio Visualizer Tuning (from Settings)
+    visualizerBarCount,
+    visualizerBarWidth,
+    visualizerRadius,
+    visualizerRadiusY,
+    visualizerMaxBarLength,
+    visualizerMinBarLength,
+    visualizerSmoothing,
+    visualizerPreAmpGain,
+    visualizerAngleTotalDeg,
+    visualizerAngleStartDeg,
+    visualizerClockwise,
+    visualizerInward,
+    visualizerFftSize,
+    visualizerFreqMin,
+    visualizerFreqMax,
+    visualizerSensitivity,
+    visualizerUpdateRateMs,
   } = useConfigStore();
 
 
@@ -1735,24 +1754,24 @@ export default function PlayerController({ onPlaylistSelect, onVideoSelect, acti
             <AudioVisualizer
               enabled={isVisualizerEnabled}
               orbSize={orbSize}
-              barCount={113}
-              barWidth={4}
-              radius={77}
-              radiusY={77}
-              maxBarLength={76}
-              minBarLength={7}
+              barCount={visualizerBarCount}
+              barWidth={visualizerBarWidth}
+              radius={visualizerRadius}
+              radiusY={visualizerRadiusY}
+              maxBarLength={visualizerMaxBarLength}
+              minBarLength={visualizerMinBarLength}
               colors={[255, 255, 255, 255]}
-              smoothing={0.75}
-              preAmpGain={4.0}
-              angleTotal={Math.PI * 2}
-              angleStart={-Math.PI / 2}
-              clockwise={true}
-              inward={false}
-              fftSize={2048}
-              freqMin={60}
-              freqMax={11000}
-              sensitivity={64}
-              updateRate={16}
+              smoothing={visualizerSmoothing}
+              preAmpGain={visualizerPreAmpGain}
+              angleTotal={(visualizerAngleTotalDeg * Math.PI) / 180}
+              angleStart={(visualizerAngleStartDeg * Math.PI) / 180}
+              clockwise={visualizerClockwise}
+              inward={visualizerInward}
+              fftSize={visualizerFftSize}
+              freqMin={visualizerFreqMin}
+              freqMax={visualizerFreqMax}
+              sensitivity={visualizerSensitivity}
+              updateRate={visualizerUpdateRateMs}
             />
             <div
               className={`rounded-full bg-sky-50 backdrop-blur-3xl shadow-2xl flex items-center justify-center transition-all relative overflow-visible z-20`}

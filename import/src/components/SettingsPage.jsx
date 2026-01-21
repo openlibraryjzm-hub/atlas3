@@ -56,7 +56,26 @@ export default function SettingsPage({ currentThemeId, onThemeChange }) {
         customBannerImage, setCustomBannerImage,
         customPageBannerImage, setCustomPageBannerImage,
         playerBorderPattern, setPlayerBorderPattern,
-        visualizerGradient, setVisualizerGradient
+        visualizerGradient, setVisualizerGradient,
+        // Visualizer tuning (live)
+        visualizerBarCount, setVisualizerBarCount,
+        visualizerBarWidth, setVisualizerBarWidth,
+        visualizerRadius, setVisualizerRadius,
+        visualizerRadiusY, setVisualizerRadiusY,
+        visualizerMaxBarLength, setVisualizerMaxBarLength,
+        visualizerMinBarLength, setVisualizerMinBarLength,
+        visualizerSmoothing, setVisualizerSmoothing,
+        visualizerPreAmpGain, setVisualizerPreAmpGain,
+        visualizerSensitivity, setVisualizerSensitivity,
+        visualizerAngleTotalDeg, setVisualizerAngleTotalDeg,
+        visualizerAngleStartDeg, setVisualizerAngleStartDeg,
+        visualizerClockwise, setVisualizerClockwise,
+        visualizerInward, setVisualizerInward,
+        visualizerFftSize, setVisualizerFftSize,
+        visualizerFreqMin, setVisualizerFreqMin,
+        visualizerFreqMax, setVisualizerFreqMax,
+        visualizerUpdateRateMs, setVisualizerUpdateRateMs,
+        resetVisualizerTuning,
     } = useConfigStore();
     const [customAvatar, setCustomAvatar] = useState('');
     const [copied, setCopied] = useState(false);
@@ -65,8 +84,6 @@ export default function SettingsPage({ currentThemeId, onThemeChange }) {
     const [mockAppBanner, setMockAppBanner] = useState('default');
     const [mockVideoBanner, setMockVideoBanner] = useState('diagonal');
     const [mockBorder, setMockBorder] = useState('neon');
-    const [mockVisualizer, setMockVisualizer] = useState('bars');
-    const [mockVisColor, setMockVisColor] = useState('theme');
 
     const promptText = 'maintain style as much as possible. dont change anything about original image. im looking for a "zoom out" so that I can [insert desired changes]. reference the single primary color markings which mark out how I want things expanded. remove single primary color markings from final image.';
 
@@ -123,6 +140,8 @@ export default function SettingsPage({ currentThemeId, onThemeChange }) {
     };
 
     const isMultiLine = (text) => text.includes('\n');
+
+    const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
 
     return (
         <div className="w-full h-full flex flex-col bg-transparent">
@@ -396,55 +415,6 @@ export default function SettingsPage({ currentThemeId, onThemeChange }) {
 
                     ) : activeTab === 'visualizer' ? (
                         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-                            <ConfigSection title="Visualizer Style" icon={Volume2}>
-                                <div className="grid grid-cols-2 gap-4">
-                                    {['Frequency Bars', 'Digital Wave', 'Particle Storm', 'Retro Lines'].map((name) => {
-                                        const id = name.toLowerCase().split(' ')[0];
-                                        return (
-                                            <button
-                                                key={id}
-                                                onClick={() => setMockVisualizer(id)}
-                                                className={`p-4 rounded-xl text-xs font-bold uppercase transition-all border-2 flex flex-col gap-3 relative overflow-hidden group ${mockVisualizer === id
-                                                    ? 'border-sky-500 bg-sky-50 text-sky-700 shadow-md'
-                                                    : 'border-slate-100 bg-white text-slate-400 hover:border-sky-200 hover:text-sky-600'
-                                                    }`}
-                                            >
-                                                <div className="w-full h-24 bg-slate-900 rounded-lg relative overflow-hidden flex items-center justify-center">
-                                                    {/* Visualizer Mocks */}
-                                                    {id === 'frequency' && (
-                                                        <div className="flex items-end gap-1 h-12">
-                                                            {[...Array(10)].map((_, i) => (
-                                                                <div key={i} className="w-2 bg-sky-400 rounded-t-sm animate-pulse" style={{ height: `${Math.random() * 100}%`, animationDelay: `${i * 0.1}s` }}></div>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                    {id === 'digital' && (
-                                                        <svg viewBox="0 0 100 40" className="w-full h-full stroke-sky-400 fill-none stroke-2 opacity-80">
-                                                            <path d="M0 20 Q 25 5, 50 20 T 100 20" />
-                                                        </svg>
-                                                    )}
-                                                    {id === 'particle' && (
-                                                        <div className="absolute inset-0 flex items-center justify-center">
-                                                            <div className="w-2 h-2 bg-sky-400 rounded-full shadow-[0_0_10px_rgba(56,189,248,0.8)] animate-ping"></div>
-                                                        </div>
-                                                    )}
-                                                    {id === 'retro' && (
-                                                        <div className="w-full h-full border-b-2 border-sky-400 flex items-end justify-between px-4 pb-2">
-                                                            <div className="text-[10px] font-mono text-sky-400">L</div>
-                                                            <div className="text-[10px] font-mono text-sky-400">R</div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="flex items-center justify-between w-full">
-                                                    <span>{name}</span>
-                                                    {mockVisualizer === id && <Check size={14} className="text-sky-500" />}
-                                                </div>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </ConfigSection>
-
                             <ConfigSection title="Visualizer Effects" icon={Volume2}>
                                 <div className="flex items-center justify-between p-4 rounded-xl border-2 border-slate-100 bg-white">
                                     <div className="space-y-1">
@@ -462,24 +432,240 @@ export default function SettingsPage({ currentThemeId, onThemeChange }) {
                                 </div>
                             </ConfigSection>
 
-                            <ConfigSection title="Color Mode" icon={Palette}>
-                                <div className="grid grid-cols-3 gap-3">
-                                    {['Theme Match', 'Rainbow', 'Custom'].map((name) => {
-                                        const id = name.toLowerCase().split(' ')[0];
-                                        return (
-                                            <button
-                                                key={id}
-                                                onClick={() => setMockVisColor(id)}
-                                                className={`p-3 rounded-xl text-xs font-bold uppercase transition-all border-2 ${mockVisColor === id
-                                                    ? 'border-sky-500 bg-sky-50 text-sky-700'
-                                                    : 'border-slate-100 bg-white text-slate-400 hover:border-sky-200'
-                                                    }`}
-                                            >
-                                                {name}
-                                            </button>
-                                        );
-                                    })}
+                            <ConfigSection title="Audio / Animation Tuning" icon={Music}>
+                                <div className="flex items-center justify-between gap-3 p-4 rounded-xl border-2 border-slate-100 bg-white">
+                                    <div className="space-y-1">
+                                        <span className="text-sm font-bold text-slate-700 block">Tuning Panel (Live)</span>
+                                        <p className="text-xs text-slate-400">
+                                            These values apply instantly to the orb visualizer. Use “Reset” to revert to the baseline.
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => resetVisualizerTuning()}
+                                        className="px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider bg-white border-2 border-slate-200 text-slate-500 hover:border-sky-300 hover:text-sky-700 hover:bg-sky-50 transition-all"
+                                        title="Reset all visualizer tuning to defaults"
+                                    >
+                                        Reset
+                                    </button>
                                 </div>
+
+                                {/* Core signal / feel knobs */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <TuningSlider
+                                        label="Smoothing"
+                                        value={visualizerSmoothing}
+                                        min={0}
+                                        max={0.95}
+                                        step={0.01}
+                                        format={(v) => v.toFixed(2)}
+                                        onChange={(v) => setVisualizerSmoothing(clamp(v, 0, 0.95))}
+                                        hint="Higher = smoother/slower. Lower = snappier/jitterier."
+                                    />
+                                    <TuningSlider
+                                        label="Pre-Amp Gain"
+                                        value={visualizerPreAmpGain}
+                                        min={0}
+                                        max={10}
+                                        step={0.1}
+                                        format={(v) => v.toFixed(1)}
+                                        onChange={(v) => setVisualizerPreAmpGain(clamp(v, 0, 10))}
+                                        hint="Boosts magnitude before mapping to bars."
+                                    />
+                                    <TuningSlider
+                                        label="Sensitivity"
+                                        value={visualizerSensitivity}
+                                        min={1}
+                                        max={256}
+                                        step={1}
+                                        format={(v) => String(Math.round(v))}
+                                        onChange={(v) => setVisualizerSensitivity(Math.round(clamp(v, 1, 256)))}
+                                        hint="Post-mapping scaler. 64 is baseline."
+                                    />
+                                    <TuningSlider
+                                        label="Update Rate (ms)"
+                                        value={visualizerUpdateRateMs}
+                                        min={8}
+                                        max={100}
+                                        step={1}
+                                        format={(v) => `${Math.round(v)}ms`}
+                                        onChange={(v) => setVisualizerUpdateRateMs(Math.round(clamp(v, 8, 100)))}
+                                        hint="Processing cadence. 16ms≈60fps, 25ms≈40fps."
+                                    />
+                                </div>
+
+                                {/* Analysis config */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="p-4 rounded-xl border-2 border-slate-100 bg-white space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs font-bold uppercase text-slate-400">FFT Size</span>
+                                            <span className="text-xs font-mono font-bold text-sky-600">{visualizerFftSize}</span>
+                                        </div>
+                                        <select
+                                            value={visualizerFftSize}
+                                            onChange={(e) => setVisualizerFftSize(parseInt(e.target.value, 10))}
+                                            className="w-full p-2 rounded-lg border-2 border-slate-100 bg-white text-slate-700 font-bold text-sm focus:border-sky-400 outline-none"
+                                        >
+                                            {[512, 1024, 2048, 4096, 8192].map((sz) => (
+                                                <option key={sz} value={sz}>{sz}</option>
+                                            ))}
+                                        </select>
+                                        <p className="text-[10px] text-slate-400">
+                                            Higher = more frequency resolution, more CPU, slower response.
+                                        </p>
+                                    </div>
+
+                                    <div className="p-4 rounded-xl border-2 border-slate-100 bg-white space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs font-bold uppercase text-slate-400">Frequency Range (Hz)</span>
+                                            <span className="text-xs font-mono font-bold text-sky-600">{visualizerFreqMin}–{visualizerFreqMax}</span>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-bold uppercase text-slate-400">Min</label>
+                                                <input
+                                                    type="number"
+                                                    value={visualizerFreqMin}
+                                                    min={20}
+                                                    max={20000}
+                                                    step={1}
+                                                    onChange={(e) => {
+                                                        const next = Math.round(clamp(parseFloat(e.target.value || '0'), 20, 20000));
+                                                        const safe = Math.min(next, Math.max(20, visualizerFreqMax - 1));
+                                                        setVisualizerFreqMin(safe);
+                                                        if (visualizerFreqMax <= safe) setVisualizerFreqMax(safe + 1);
+                                                    }}
+                                                    className="w-full p-2 rounded-lg border-2 border-slate-100 bg-white text-slate-700 font-bold text-sm focus:border-sky-400 outline-none"
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-bold uppercase text-slate-400">Max</label>
+                                                <input
+                                                    type="number"
+                                                    value={visualizerFreqMax}
+                                                    min={20}
+                                                    max={20000}
+                                                    step={1}
+                                                    onChange={(e) => {
+                                                        const next = Math.round(clamp(parseFloat(e.target.value || '0'), 20, 20000));
+                                                        const safe = Math.max(next, Math.min(20000, visualizerFreqMin + 1));
+                                                        setVisualizerFreqMax(safe);
+                                                        if (visualizerFreqMin >= safe) setVisualizerFreqMin(safe - 1);
+                                                    }}
+                                                    className="w-full p-2 rounded-lg border-2 border-slate-100 bg-white text-slate-700 font-bold text-sm focus:border-sky-400 outline-none"
+                                                />
+                                            </div>
+                                        </div>
+                                        <p className="text-[10px] text-slate-400">
+                                            Range is mapped logarithmically across bars (human-hearing-ish).
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Advanced geometry (still useful for feel/spacing) */}
+                                <details className="rounded-xl border-2 border-slate-100 bg-white p-4">
+                                    <summary className="cursor-pointer select-none text-xs font-black uppercase tracking-widest text-slate-400">
+                                        Advanced Geometry
+                                    </summary>
+                                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <TuningSlider
+                                            label="Bar Count"
+                                            value={visualizerBarCount}
+                                            min={32}
+                                            max={256}
+                                            step={1}
+                                            format={(v) => String(Math.round(v))}
+                                            onChange={(v) => setVisualizerBarCount(Math.round(clamp(v, 32, 256)))}
+                                        />
+                                        <TuningSlider
+                                            label="Bar Width"
+                                            value={visualizerBarWidth}
+                                            min={1}
+                                            max={10}
+                                            step={1}
+                                            format={(v) => `${Math.round(v)}px`}
+                                            onChange={(v) => setVisualizerBarWidth(Math.round(clamp(v, 1, 10)))}
+                                        />
+                                        <TuningSlider
+                                            label="Radius (X)"
+                                            value={visualizerRadius}
+                                            min={40}
+                                            max={140}
+                                            step={1}
+                                            format={(v) => `${Math.round(v)}px`}
+                                            onChange={(v) => setVisualizerRadius(Math.round(clamp(v, 40, 140)))}
+                                        />
+                                        <TuningSlider
+                                            label="Radius (Y)"
+                                            value={visualizerRadiusY}
+                                            min={40}
+                                            max={140}
+                                            step={1}
+                                            format={(v) => `${Math.round(v)}px`}
+                                            onChange={(v) => setVisualizerRadiusY(Math.round(clamp(v, 40, 140)))}
+                                        />
+                                        <TuningSlider
+                                            label="Min Bar Length"
+                                            value={visualizerMinBarLength}
+                                            min={0}
+                                            max={60}
+                                            step={1}
+                                            format={(v) => `${Math.round(v)}px`}
+                                            onChange={(v) => {
+                                                const next = Math.round(clamp(v, 0, 60));
+                                                setVisualizerMinBarLength(next);
+                                                if (visualizerMaxBarLength < next) setVisualizerMaxBarLength(next);
+                                            }}
+                                        />
+                                        <TuningSlider
+                                            label="Max Bar Length"
+                                            value={visualizerMaxBarLength}
+                                            min={1}
+                                            max={200}
+                                            step={1}
+                                            format={(v) => `${Math.round(v)}px`}
+                                            onChange={(v) => {
+                                                const next = Math.round(clamp(v, 1, 200));
+                                                setVisualizerMaxBarLength(next);
+                                                if (visualizerMinBarLength > next) setVisualizerMinBarLength(next);
+                                            }}
+                                        />
+                                        <TuningSlider
+                                            label="Angle Start (deg)"
+                                            value={visualizerAngleStartDeg}
+                                            min={-180}
+                                            max={180}
+                                            step={1}
+                                            format={(v) => `${Math.round(v)}°`}
+                                            onChange={(v) => setVisualizerAngleStartDeg(Math.round(clamp(v, -180, 180)))}
+                                            hint="Default -90° = 270° (bottom start)."
+                                        />
+                                        <TuningSlider
+                                            label="Angle Total (deg)"
+                                            value={visualizerAngleTotalDeg}
+                                            min={0}
+                                            max={360}
+                                            step={1}
+                                            format={(v) => `${Math.round(v)}°`}
+                                            onChange={(v) => setVisualizerAngleTotalDeg(Math.round(clamp(v, 0, 360)))}
+                                            hint="360° = full circle. 270° = open arc."
+                                        />
+                                    </div>
+
+                                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <ToggleRow
+                                            label="Clockwise"
+                                            description="Direction the bars are indexed around the circle."
+                                            value={visualizerClockwise}
+                                            onToggle={() => setVisualizerClockwise(!visualizerClockwise)}
+                                        />
+                                        <ToggleRow
+                                            label="Inward"
+                                            description="Draw bars towards the orb instead of outward."
+                                            value={visualizerInward}
+                                            onToggle={() => setVisualizerInward(!visualizerInward)}
+                                        />
+                                    </div>
+                                </details>
                             </ConfigSection>
 
                             <div className="p-4 bg-sky-50 rounded-xl border border-sky-100 text-sky-800 text-xs font-medium leading-relaxed">
@@ -824,6 +1010,44 @@ function ConfigSection({ title, icon: Icon, children }) {
         <div className="space-y-4 border-t border-sky-50 pt-6 first:border-0 first:pt-0 bg-white/50 p-4 rounded-2xl">
             <h3 className="text-xs font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">{Icon && <Icon size={14} />} {title}</h3>
             <div className="space-y-4 px-1">{children}</div>
+        </div>
+    );
+}
+
+function TuningSlider({ label, value, min, max, step, onChange, format, hint }) {
+    return (
+        <div className="p-4 rounded-xl border-2 border-slate-100 bg-white space-y-2">
+            <div className="flex justify-between items-center">
+                <span className="text-xs font-bold uppercase text-slate-400">{label}</span>
+                <span className="text-xs font-mono font-bold text-sky-600">{format ? format(value) : value}</span>
+            </div>
+            <input
+                type="range"
+                min={min}
+                max={max}
+                step={step}
+                value={value}
+                onChange={(e) => onChange(parseFloat(e.target.value))}
+                className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-sky-500 hover:accent-sky-400 transition-all border border-slate-200"
+            />
+            {hint && <p className="text-[10px] text-slate-400 leading-relaxed">{hint}</p>}
+        </div>
+    );
+}
+
+function ToggleRow({ label, description, value, onToggle }) {
+    return (
+        <div className="flex items-center justify-between p-4 rounded-xl border-2 border-slate-100 bg-white">
+            <div className="space-y-1">
+                <span className="text-sm font-bold text-slate-700 block">{label}</span>
+                {description && <p className="text-xs text-slate-400">{description}</p>}
+            </div>
+            <button
+                onClick={onToggle}
+                className={`w-12 h-6 rounded-full transition-colors relative ${value ? 'bg-sky-500' : 'bg-slate-200'}`}
+            >
+                <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${value ? 'left-7 shadow-sm' : 'left-1'}`} />
+            </button>
         </div>
     );
 }
