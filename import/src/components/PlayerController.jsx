@@ -60,8 +60,9 @@ import { useFolderStore } from '../store/folderStore';
 import { useTabStore } from '../store/tabStore';
 import { useConfigStore } from '../store/configStore';
 import { useTabPresetStore } from '../store/tabPresetStore';
+import useBrowserStore from '../store/browserStore';
 import { useInspectLabel } from '../utils/inspectLabels';
-import { getAllPlaylists, getPlaylistItems, getAllFoldersWithVideos, getVideosInFolder, getAllStuckFolders, assignVideoToFolder, unassignVideoFromFolder, getVideoFolderAssignments, createPlaylist, addVideoToPlaylist, removeVideoFromPlaylist, getFolderMetadata } from '../api/playlistApi';
+import { getAllPlaylists, getPlaylistItems, getAllFoldersWithVideos, getVideosInFolder, getAllStuckFolders, assignVideoToFolder, unassignVideoFromFolder, getVideoFolderAssignments, createPlaylist, addVideoToPlaylist, removeVideoFromPlaylist, getFolderMetadata, setBrowserMode } from '../api/playlistApi';
 import { getThumbnailUrl } from '../utils/youtubeUtils';
 import { getFolderColorById, FOLDER_COLORS } from '../utils/folderColors';
 import { THEMES } from '../utils/themes';
@@ -114,6 +115,7 @@ export default function PlayerController({ onPlaylistSelect, onVideoSelect, acti
   const { showColoredFolders } = useFolderStore();
   const { tabs, activeTabId, setActiveTab } = useTabStore();
   const { presets, activePresetId, setActivePreset } = useTabPresetStore();
+  const { isBrowserVisible, hideBrowser } = useBrowserStore();
 
   // Ensure tabs and presets are arrays
   const safeTabs = Array.isArray(tabs) ? tabs : [];
@@ -831,6 +833,11 @@ export default function PlayerController({ onPlaylistSelect, onVideoSelect, acti
     if (viewMode === 'full') {
       setViewMode('half');
     }
+    // Hide browser when navigating to playlists
+    if (isBrowserVisible) {
+      hideBrowser();
+      setBrowserMode('hide').catch(err => console.error('Failed to hide browser:', err));
+    }
   };
 
   const handleVideosGrid = () => {
@@ -853,6 +860,11 @@ export default function PlayerController({ onPlaylistSelect, onVideoSelect, acti
       if (viewMode === 'full') {
         setViewMode('half');
       }
+      // Hide browser when navigating to videos
+      if (isBrowserVisible) {
+        hideBrowser();
+        setBrowserMode('hide').catch(err => console.error('Failed to hide browser:', err));
+      }
     }
   };
 
@@ -861,6 +873,11 @@ export default function PlayerController({ onPlaylistSelect, onVideoSelect, acti
     setCurrentPage('history');
     if (viewMode === 'full') {
       setViewMode('half');
+    }
+    // Hide browser when navigating to history
+    if (isBrowserVisible) {
+      hideBrowser();
+      setBrowserMode('hide').catch(err => console.error('Failed to hide browser:', err));
     }
   };
 

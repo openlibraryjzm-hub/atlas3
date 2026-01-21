@@ -20,6 +20,9 @@ namespace Atlas3.Bridge
         private readonly DatabaseService _dbService;
         private readonly CoreWebView2 _webView;
 
+        // Event to notify MainWindow of browser mode changes
+        public event EventHandler<string>? BrowserModeChanged;
+
         public AppBridge(DatabaseService dbService, CoreWebView2 webView)
         {
             _dbService = dbService;
@@ -237,6 +240,17 @@ namespace Atlas3.Bridge
                     
                     case "get_all_video_progress":
                         result = _dbService.GetAllVideoProgress(); 
+                        break;
+
+                    case "set_browser_mode":
+                        {
+                            var mode = GetString(message.Payload, "mode");
+                            if (mode != null)
+                            {
+                                BrowserModeChanged?.Invoke(this, mode);
+                                result = true;
+                            }
+                        }
                         break;
 
                     case "test_connection":

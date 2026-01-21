@@ -29,6 +29,9 @@ public partial class MainWindow : Window
 
         // 2. Initialize Bridge (Connects React <-> C#)
         _bridge = new Atlas3.Bridge.AppBridge(_dbService, AppWebView.CoreWebView2);
+        
+        // Subscribe to browser mode changes from React
+        _bridge.BrowserModeChanged += OnBrowserModeChanged;
 
         // 3. Point to the local index.html or Dev Server
 #if DEBUG
@@ -55,6 +58,26 @@ public partial class MainWindow : Window
              System.Windows.MessageBox.Show($"Could not find index.html at {appPath}. Please build the frontend.");
         }
 #endif
+    }
+
+    private void OnBrowserModeChanged(object? sender, string mode)
+    {
+        // Dispatch to UI thread since this comes from WebView2 message handler
+        Dispatcher.Invoke(() =>
+        {
+            switch (mode.ToLower())
+            {
+                case "split":
+                    ModeSplit_Click(null, null!);
+                    break;
+                case "full":
+                    ModeFull_Click(null, null!);
+                    break;
+                case "hide":
+                    ModeHide_Click(null, null!);
+                    break;
+            }
+        });
     }
 
     // --- MODE CONTROLS ---

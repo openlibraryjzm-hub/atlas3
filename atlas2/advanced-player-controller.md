@@ -121,6 +121,13 @@ It mirrors the design language of the Player Controller's Video Menu toolbar:
 - **Buttons**: Circular (icon-only for Support, Settings, History, Likes, Pins) or Pill-shaped (text+icon - for Playlists and Videos)
 - **Active State**: White background, Sky-500 border, Sky text/icon
 - **Inactive State**: White background, Slate-700 border (#334155), Slate icon
+- **Browser Toggle (Monitor Icon)**: A specialized action button that activates the split-screen browser (Layer 2).
+  - Clicking this button squashes the Layer 1 (Video App) to the left side and opens the browser on the right.
+  - It also hides any active Layer 1 side menus (Playlists/Videos Grid) to maximize focus on the player and browser.
+
+**Navigation Interlocks:**
+- **Auto-Hide Browser**: Clicking any navigation tab ('Playlists', 'Videos', 'History', etc.) while the browser is visible will automatically hide the browser and restore Layer 1 to full window width.
+- **View Mode Restore**: Navigating to a side-menu page (e.g., Playlists) while in full mode will automatically switch to `half` view mode to ensure the menu is visible.
 
 #### ### 1.3 Top Video Menu
 
@@ -225,6 +232,7 @@ Users see a bottom toolbar in the video menu rectangle with distinct, grouped ac
 - **Navigation Controls (Left-Aligned Cluster)**:
   - **Previous Video** (chevron left): Navigates to previous video (-148px offset).
   - **Grid Button** (center): Opens the Videos page grid view. Icon: **Custom Curvy Film Strip SVG**. Positioned between chevrons (-120px offset).
+    - **Note**: Clicking this button automatically hides the browser (Layer 2) if it is currently visible.
   - **Next Video** (chevron right): Navigates to next video (-92px offset).
   - **Play Button (Folder Cycle)** (right of next): A centralized play/pause/reset control (-60px offset).
     - **Logic**: Cycles through colored folders within the playlist that actually contain videos.

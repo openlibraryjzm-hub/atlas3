@@ -16,13 +16,14 @@ Atlas 3 moves away from managing multiple native windows or fighting with framew
 *   **Behavior:** 
     *   Always at the bottom of the stack (`Grid.Row="0"`).
     *   In **Normal Mode**, it spans the full width.
-    *   In **Split Mode**, it is "squashed" to the Left Column (50% width) to allow the Browser to live next to it without Z-fighting.
+    *   In **Split Mode**, it is "squashed" to the Left Column (50% width). **Crucially**, the React frontend is programmed to hide its own side menus (Playlists/Videos Grid) in this state, ensuring Layer 1 only displays the active player/navigation, effectively treating the browser as the primary "page".
 
 ### Layer 2: The Browser (Middle)
 *   **Documentation:** [Detailed Guide](browser_layer.md)
 *   **Role:** A lightweight, mock-Chrome web browser for browsing the internet within the app.
 *   **Tech:** WebView2 (separate instances per Tab) wrapped in a WPF `TabControl`.
 *   **Optimization:** **NO CefSharp.** We use WebView2 for its lightweight footprint and shared Edge runtime.
+*   **Seamless Integration**: The browser acts as a toggleable "page". Clicking any main app navigation tab (e.g., Playlists) automatically triggers a hide signal to Layer 2 and restores the Layer 1 UI to its normal full-width view.
 *   **Modes:**
     *   **Hidden:** Completely collapsed when not in use.
     *   **Split Screen:** Occupies the Right Column (50%). Layer 1 is visible on the left.

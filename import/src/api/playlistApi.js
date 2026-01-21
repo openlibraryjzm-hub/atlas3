@@ -418,3 +418,13 @@ export const getAllVideoProgress = async () => {
   }
 };
 
+// Browser mode control
+export const setBrowserMode = async (mode) => {
+  try {
+    const result = await invokeCSharp('set_browser_mode', { mode });
+    return result;
+  } catch (error) {
+    console.error('Error in setBrowserMode API:', error);
+    throw error;
+  }
+};

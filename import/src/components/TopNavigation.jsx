@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useNavigationStore } from '../store/navigationStore';
 import { useLayoutStore } from '../store/layoutStore';
 import { usePlaylistStore } from '../store/playlistStore';
-import { ChevronLeft, Heart, Pin, Settings, Clock, Cat } from 'lucide-react';
+import useBrowserStore from '../store/browserStore';
+import { ChevronLeft, Heart, Pin, Settings, Clock, Cat, Monitor } from 'lucide-react';
 import { THEMES } from '../utils/themes';
+import { setBrowserMode } from '../api/playlistApi';
 
 import SideMenuScrollControls from './SideMenuScrollControls';
 
@@ -11,6 +13,7 @@ const TopNavigation = () => {
     const { currentPage, setCurrentPage, history, goBack } = useNavigationStore();
     const { viewMode, setViewMode, inspectMode } = useLayoutStore();
     const { previewPlaylistId, clearPreview } = usePlaylistStore();
+    const { isBrowserVisible, showBrowser, hideBrowser } = useBrowserStore();
     const [currentThemeId] = useState('blue'); // Defaulting to blue theme for consistency, could be lifted to store if fully dynamic theming is required here
 
     const theme = THEMES[currentThemeId];
@@ -34,6 +37,23 @@ const TopNavigation = () => {
         const isNavigationTab = ['playlists', 'videos', 'history', 'likes', 'pins', 'settings', 'support'].includes(tabId);
         if (isNavigationTab && viewMode === 'full') {
             setViewMode('half');
+        }
+        // Hide browser when navigating to any page
+        if (isBrowserVisible) {
+            hideBrowser();
+            setBrowserMode('hide').catch(err => console.error('Failed to hide browser:', err));
+        }
+    };
+
+    const handleBrowserClick = async () => {
+        try {
+            // Show browser in split mode and hide video app UI
+            await setBrowserMode('split');
+            showBrowser();
+            // Hide side menu to give more space/focus to player
+            setViewMode('full');
+        } catch (error) {
+            console.error('Failed to set browser mode:', error);
         }
     };
 
@@ -67,6 +87,15 @@ const TopNavigation = () => {
                 <div className="flex items-center gap-2 pl-2 border-l border-sky-300/30">
                     {/* Scroll Controls */}
                     <SideMenuScrollControls />
+
+                    {/* Browser Button */}
+                    <button
+                        onClick={handleBrowserClick}
+                        className="flex items-center justify-center w-7 h-7 rounded-full shadow-sm border transition-all hover:scale-105 active:scale-90 bg-white border-sky-500 text-sky-600 hover:bg-sky-50"
+                        title={getInspectTitle('Show Browser (Split)') || 'Show Browser (Split)'}
+                    >
+                        <Monitor size={16} />
+                    </button>
 
                     {/* Back Button */}
                     {(history.length > 0 || previewPlaylistId) && (

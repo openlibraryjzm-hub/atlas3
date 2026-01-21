@@ -322,6 +322,22 @@ The application uses **Zustand** (v5.0.9) for state management. Zustand is a lig
 
 ---
 
+### 10. browserStore (`src/store/browserStore.js`)
+
+**Purpose**: Tracks visibility of the Layer 2 Browser and coordinates visibility state with the C# backend.
+
+**State**:
+- `isBrowserVisible`: boolean - Whether the browser overlay (Layer 2) is currently visible.
+
+**Actions**:
+- `showBrowser()` - Sets `isBrowserVisible` to true.
+- `hideBrowser()` - Sets `isBrowserVisible` to false.
+- `toggleBrowser()` - Toggles the visibility state.
+
+**Source of Truth**: React state (not persisted). It mirrors the intended visibility which is then communicated to the C# host via `setBrowserMode`.
+
+---
+
 ## State Flow Patterns
 
 ### Pattern 1: Playlist Selection → Video Loading

@@ -332,7 +332,24 @@ When navigating playlists:
 
 ---
 
-## Navigation State Dependencies
+### Entry Point 8: Browser Integration Navigation
+ 
++**Flow (Opening Browser):**
++1. User clicks **Monitor icon** in Top Navigation → `handleBrowserClick()` (TopNavigation.jsx)
++2. Sends `set_browser_mode('split')` to C# → App squashed to left, Browser visible on right
++3. Sets `viewMode` to `full` → Hides Layer 1 side menu (Playlists/Videos Grid)
++4. Calls `showBrowser()` → Updates `browserStore` visibility state
++
++**Flow (Closing/Hiding Browser):**
++1. User clicks any navigation tab (Playlists, Videos, etc.) or a grid button in PlayerController
++2. Handler detects `isBrowserVisible` is true
++3. Calls `hideBrowser()` → Updates store
++4. Sends `set_browser_mode('hide')` to C# → Browser collapses, App takes full window
++5. If clicking a navigation tab → Sets `viewMode` to `half` → Restores the side menu visibility
++
++---
++
++## Navigation State Dependencies
 
 ### Dependency Chain
 

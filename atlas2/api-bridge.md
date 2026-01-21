@@ -278,7 +278,25 @@ await invoke('add_video_to_playlist', {
 
 ---
 
-## Error Handling Patterns
+---
+ 
++### 9. Browser Control Commands
++
++**Purpose**: Control the visibility and layout mode of the Layer 2 Browser.
++
++**Commands:**
++- `set_browser_mode(mode)` → Triggers `BrowserModeChanged` event in C# backend.
++
++**API Functions** (`playlistApi.js`):
++- `setBrowserMode(mode)`: Sends a mode command (`'split'`, `'full'`, or `'hide'`) to the C# host to resize/toggle the browser overlay.
++
++**Usage Pattern**:
++- **Split Screen**: `setBrowserMode('split')` is used when the user clicks the Monitor icon to browse alongside the video player.
++- **Hiding**: `setBrowserMode('hide')` is called automatically during Layer 1 navigation to ensure the browser disappears when switching to app-specific pages.
++
++---
++
+ ## Error Handling Patterns
 
 ### Frontend Error Handling
 
