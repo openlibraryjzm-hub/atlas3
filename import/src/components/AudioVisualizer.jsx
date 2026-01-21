@@ -1,9 +1,33 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { listen } from '@tauri-apps/api/event';
-import { invoke } from '@tauri-apps/api/core';
 import { mapFrequencyToBars, smoothBarValues } from '../utils/audioProcessor';
 import { fft, util } from 'fft-js';
 import { useConfigStore } from '../store/configStore';
+
+// Helper to send request/response messages to the C# host (WebView2).
+const invokeHost = (command, payload = {}) => {
+  return new Promise((resolve, reject) => {
+    if (!window.chrome?.webview) {
+      // Dev browser fallback: no host available.
+      resolve(null);
+      return;
+    }
+
+    const requestId = crypto.randomUUID();
+
+    const handleResponse = (event) => {
+      const message = event.data;
+      if (message?.requestId !== requestId) return;
+
+      window.chrome.webview.removeEventListener('message', handleResponse);
+
+      if (message.success) resolve(message.data);
+      else reject(new Error(message.error || 'Unknown host error'));
+    };
+
+    window.chrome.webview.addEventListener('message', handleResponse);
+    window.chrome.webview.postMessage({ command, payload, requestId });
+  });
+};
 
 /**
  * AudioVisualizer - Circular audio visualizer matching Rainmeter VisBubble widget
@@ -71,7 +95,7 @@ const AudioVisualizer = ({
         if (isCapturingRef.current) {
           console.log('[AudioVisualizer] Stopping audio capture...');
           try {
-            await invoke('stop_audio_capture');
+            await invokeHost('stop_audio_capture');
             if (mounted) {
               isCapturingRef.current = false;
               setIsCapturing(false);
@@ -83,11 +107,16 @@ const AudioVisualizer = ({
         return;
       }
 
+      if (!window.chrome?.webview) {
+        console.warn('[AudioVisualizer] WebView2 host not detected; cannot start system audio capture.');
+        return;
+      }
+
       // Always try to stop first to ensure clean state
       if (isCapturingRef.current) {
         console.log('[AudioVisualizer] Stopping existing capture before restart...');
         try {
-          await invoke('stop_audio_capture');
+          await invokeHost('stop_audio_capture');
         } catch (error) {
           // Ignore errors if not running
           console.log('[AudioVisualizer] Stop error (may be expected):', error);
@@ -106,13 +135,13 @@ const AudioVisualizer = ({
 
         // Test command invocation first
         try {
-          const testResult = await invoke('test_audio_command');
+          const testResult = await invokeHost('test_audio_command');
           console.log('[AudioVisualizer] Test command result:', testResult);
         } catch (testError) {
           console.error('[AudioVisualizer] Test command failed:', testError);
         }
 
-        await invoke('start_audio_capture');
+        await invokeHost('start_audio_capture');
         if (mounted) {
           isCapturingRef.current = true;
           setIsCapturing(true);
@@ -133,7 +162,7 @@ const AudioVisualizer = ({
       mounted = false;
       if (isCapturingRef.current) {
         console.log('[AudioVisualizer] Stopping audio capture (cleanup)...');
-        invoke('stop_audio_capture').catch(console.error);
+        invokeHost('stop_audio_capture').catch(console.error);
         isCapturingRef.current = false;
         setIsCapturing(false);
       }
@@ -144,59 +173,91 @@ const AudioVisualizer = ({
   useEffect(() => {
     if (!enabled) return;
 
-    let unlisten = null;
     let eventCount = 0;
 
     const setupListener = async () => {
       try {
         console.log('[AudioVisualizer] Setting up audio data listener...');
-        unlisten = await listen('audio-data', (event) => {
-          // Log first event to confirm listener is working
-          if (eventCount === 0) {
-            console.log('[AudioVisualizer] ✅ FIRST AUDIO EVENT RECEIVED!', {
-              payloadType: typeof event.payload,
-              isArray: Array.isArray(event.payload),
-              length: event.payload?.length,
-              payload: event.payload?.slice ? event.payload.slice(0, 5) : event.payload
-            });
-          }
+        if (!window.chrome?.webview) {
+          console.warn('[AudioVisualizer] No WebView2 host detected; audio visualizer will show idle bars only.');
+          return;
+        }
 
-          const samples = event.payload; // Array of f32 samples
+        const handleMessage = (evt) => {
+          const message = evt.data;
+          if (!message || message.type !== 'event' || message.event !== 'audio-data') return;
 
-          if (!samples || !Array.isArray(samples) || samples.length === 0) {
-            console.warn('[AudioVisualizer] Invalid samples:', samples);
+          const payload = message.payload;
+          const samples = Array.isArray(payload)
+            ? payload
+            : (payload?.samples && Array.isArray(payload.samples) ? payload.samples : null);
+
+          const sr = (payload && !Array.isArray(payload) && typeof payload.sampleRate === 'number')
+            ? payload.sampleRate
+            : null;
+
+          if (sr) sampleRateRef.current = sr;
+
+          if (!samples || samples.length === 0) {
+            console.warn('[AudioVisualizer] Invalid samples payload:', payload);
             return;
           }
 
+          // Log first event to confirm listener is working
+          if (eventCount === 0) {
+            console.log('[AudioVisualizer] ✅ FIRST AUDIO EVENT RECEIVED!', {
+              payloadType: typeof payload,
+              isArray: Array.isArray(payload),
+              length: samples.length,
+              sampleRate: sr || sampleRateRef.current,
+              head: samples.slice(0, 5),
+            });
+          }
+
           eventCount++;
+
           if (eventCount === 1 || eventCount % 100 === 0) {
-            const maxSample = Math.max(...samples.map(s => Math.abs(s)));
+            let maxSample = 0;
+            for (let i = 0; i < samples.length; i++) {
+              const v = Math.abs(samples[i]);
+              if (v > maxSample) maxSample = v;
+            }
             console.log('[AudioVisualizer] Received', eventCount, 'audio events,', samples.length, 'samples, max:', maxSample.toFixed(4), 'queue size:', audioDataQueueRef.current.length);
           }
 
-          // Add samples to queue
-          audioDataQueueRef.current.push(...samples);
+          // Add samples to queue (avoid spread on large arrays)
+          for (let i = 0; i < samples.length; i++) {
+            audioDataQueueRef.current.push(samples[i]);
+          }
 
           // Keep queue size reasonable (last 2 seconds of audio at 48kHz = 96000 samples)
           const maxQueueSize = 96000;
           if (audioDataQueueRef.current.length > maxQueueSize) {
             audioDataQueueRef.current = audioDataQueueRef.current.slice(-maxQueueSize);
           }
-        });
+        };
+
+        window.chrome.webview.addEventListener('message', handleMessage);
         console.log('[AudioVisualizer] Audio listener set up successfully, waiting for events...');
 
         // Set a timeout to warn if no events are received
         setTimeout(() => {
           if (eventCount === 0) {
-            console.warn('[AudioVisualizer] ⚠️ No audio events received after 2 seconds. Check Rust console for audio capture logs.');
+            console.warn('[AudioVisualizer] ⚠️ No audio events received after 2 seconds. Check C# output for audio capture logs.');
           }
         }, 2000);
+
+        // Return cleanup for this setup
+        return () => {
+          try { window.chrome.webview.removeEventListener('message', handleMessage); } catch {}
+        };
       } catch (error) {
         console.error('[AudioVisualizer] Failed to set up audio listener:', error);
       }
     };
 
-    setupListener();
+    let cleanupListener = null;
+    setupListener().then((cleanup) => { cleanupListener = cleanup; }).catch(() => {});
 
     // Process audio queue periodically using direct FFT computation
     const processAudio = () => {
@@ -289,9 +350,7 @@ const AudioVisualizer = ({
     }, 1000);
 
     return () => {
-      if (unlisten) {
-        unlisten();
-      }
+      if (cleanupListener) cleanupListener();
       if (processingIntervalRef.current) {
         clearInterval(processingIntervalRef.current);
       }

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.Web.WebView2.Core;
 using Atlas3.Services;
 using Atlas3.Models;
+using System.Windows.Threading;
 
 namespace Atlas3.Bridge
 {
@@ -19,6 +20,8 @@ namespace Atlas3.Bridge
     {
         private readonly DatabaseService _dbService;
         private readonly CoreWebView2 _webView;
+        private readonly Dispatcher _dispatcher;
+        private readonly AudioCaptureService? _audioCapture;
 
         // Event to notify MainWindow of browser mode changes
         public event EventHandler<string>? BrowserModeChanged;
@@ -26,13 +29,27 @@ namespace Atlas3.Bridge
         // Events to notify MainWindow of window control actions (Layer 1 UI)
         public event EventHandler<string>? WindowCommandRequested;
 
-        public AppBridge(DatabaseService dbService, CoreWebView2 webView)
+        public AppBridge(DatabaseService dbService, CoreWebView2 webView, Dispatcher dispatcher, AudioCaptureService? audioCapture = null)
         {
             _dbService = dbService;
             _webView = webView;
+            _dispatcher = dispatcher;
+            _audioCapture = audioCapture;
             
             // Subscribe to messages
             _webView.WebMessageReceived += OnWebMessageReceived;
+
+            if (_audioCapture != null)
+            {
+                _audioCapture.AudioChunkAvailable += OnAudioChunkAvailable;
+            }
+        }
+
+        private void OnAudioChunkAvailable(object? sender, AudioChunkEventArgs e)
+        {
+            // Stream-style push message (no requestId).
+            // Payload is compatible with future extensions (sampleRate).
+            SendEvent("audio-data", new { samples = e.Samples, sampleRate = e.SampleRate });
         }
 
         private async void OnWebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
@@ -281,6 +298,21 @@ namespace Atlas3.Bridge
                         result = "Connection Successful";
                         break;
 
+                    // --- Audio Visualizer ---
+                    case "test_audio_command":
+                        result = "Test command works!";
+                        break;
+
+                    case "start_audio_capture":
+                        _audioCapture?.Start();
+                        result = true;
+                        break;
+
+                    case "stop_audio_capture":
+                        _audioCapture?.Stop();
+                        result = true;
+                        break;
+
                     default:
                         // Log unknown command
                         System.Diagnostics.Debug.WriteLine($"Unknown Command: {message.Command}");
@@ -343,6 +375,24 @@ namespace Atlas3.Bridge
             
             var json = JsonSerializer.Serialize(response);
             _webView.PostWebMessageAsJson(json);
+        }
+
+        private void SendEvent(string eventName, object payload)
+        {
+            var message = new
+            {
+                type = "event",
+                @event = eventName,
+                payload = payload
+            };
+
+            var json = JsonSerializer.Serialize(message);
+
+            // CoreWebView2 must be called from its owning thread (UI thread).
+            _dispatcher.BeginInvoke(() =>
+            {
+                try { _webView.PostWebMessageAsJson(json); } catch { /* ignore */ }
+            });
         }
     }
 }

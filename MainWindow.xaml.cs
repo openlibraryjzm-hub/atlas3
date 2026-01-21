@@ -25,6 +25,7 @@ public partial class MainWindow : Window
 
     private Atlas3.Services.DatabaseService? _dbService;
     private Atlas3.Bridge.AppBridge? _bridge;
+    private Atlas3.Services.AudioCaptureService? _audioCapture;
 
     private async void InitializeWebView()
     {
@@ -38,8 +39,11 @@ public partial class MainWindow : Window
         string dbPath = System.IO.Path.Combine(AppContext.BaseDirectory, "playlists.db"); // Should be copied by .csproj
         _dbService = new Atlas3.Services.DatabaseService(dbPath);
 
+        // 1b. Initialize Audio Capture (System loopback for visualizer)
+        _audioCapture = new Atlas3.Services.AudioCaptureService();
+
         // 2. Initialize Bridge (Connects React <-> C#)
-        _bridge = new Atlas3.Bridge.AppBridge(_dbService, AppWebView.CoreWebView2);
+        _bridge = new Atlas3.Bridge.AppBridge(_dbService, AppWebView.CoreWebView2, Dispatcher, _audioCapture);
         
         // Subscribe to browser mode changes from React
         _bridge.BrowserModeChanged += OnBrowserModeChanged;
@@ -383,5 +387,12 @@ public partial class MainWindow : Window
         {
             // If DWM APIs aren't available, ignore.
         }
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        try { _audioCapture?.Dispose(); } catch { /* ignore */ }
+        _audioCapture = null;
+        base.OnClosed(e);
     }
 }
