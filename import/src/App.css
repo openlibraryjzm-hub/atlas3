@@ -16,8 +16,8 @@ html,
 #root {
   margin: 0;
   padding: 0;
-  height: 100vh;
-  width: 100vw;
+  height: 100%;
+  width: 100%;
   background: var(--bg-primary);
   color: #000000;
   overflow: hidden;
@@ -29,9 +29,10 @@ html,
 }
 
 .app-container {
-  height: 100vh;
-  width: 100vw;
-  position: relative;
+  position: fixed;
+  inset: 0;
+  height: auto;
+  width: auto;
 }
 
 /* View Mode Toggle - Temporary for testing */

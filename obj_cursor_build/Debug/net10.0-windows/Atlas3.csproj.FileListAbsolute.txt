@@ -1,0 +1,9 @@
+E:\backup\obj_cursor_build\Debug\net10.0-windows\Atlas3.csproj.AssemblyReference.cache
+E:\backup\obj_cursor_build\Debug\net10.0-windows\Controls\BrowserOverlay.baml
+E:\backup\obj_cursor_build\Debug\net10.0-windows\Controls\BrowserOverlay.g.cs
+E:\backup\obj_cursor_build\Debug\net10.0-windows\MainWindow.g.cs
+E:\backup\obj_cursor_build\Debug\net10.0-windows\App.g.cs
+E:\backup\obj_cursor_build\Debug\net10.0-windows\Atlas3_Content.g.cs
+E:\backup\obj_cursor_build\Debug\net10.0-windows\GeneratedInternalTypeHelper.g.cs
+E:\backup\obj_cursor_build\Debug\net10.0-windows\Atlas3_MarkupCompile.cache
+E:\backup\obj_cursor_build\Debug\net10.0-windows\Atlas3_MarkupCompile.lref

@@ -17,11 +17,15 @@ The UI system provides a consistent layout shell with a side menu that displays 
 #### ### 4.0 Layout & Styling
 
 **1: Window Architecture (Borderless)**
-The application uses a modern **Borderless Window** design (`decorations: false`):
-- **No Title Bar**: The native OS title bar is removed for a seamless, premium look.
-- **Custom Window Controls**: A custom `WindowControls` component (Minimize, Maximize, Close) is integrated into the top-right corner of the banner.
-- **Draggable Banner**: The entire Top Banner is a draggable region (`data-tauri-drag-region`), allowing users to move the window.
-- **Dimensions**: Defaults to 1920x1030 (fullscreen width, taskbar-aware height) positioned at (0,0).
+The application uses a modern **Borderless Host Window** (C# WPF, `WindowStyle=None`):
+- **No native title bar**: the OS title bar is removed for a seamless look.
+- **Window controls live in Layer 1 UI**: `WindowControls` renders inside the banner and calls the C# host via WebView2 `postMessage` commands:
+  - `window_minimize`
+  - `window_toggle_maximize`
+  - `window_close`
+  - `window_drag` (drag-to-move window; double-click toggles maximize)
+- **Important**: `data-tauri-drag-region` is a legacy Tauri hint and is not used by the WPF/WebView2 host.
+- **Known compromise**: Windows/DWM can still show a thin OS border/shadow around a borderless window in some states; we accept this for now.
 
 **2: Visual Design System**
 The application employs a high-contrast, structured design with distinct borders and patterns:

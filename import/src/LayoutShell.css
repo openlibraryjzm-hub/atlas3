@@ -12,8 +12,8 @@
 /* LayoutShell.css */
 .layout-shell {
   display: grid;
-  height: 100vh;
-  width: 100vw;
+  height: 100%;
+  width: 100%;
   background: transparent;
   grid-template-rows: auto 1fr;
   grid-template-columns: 1fr;
@@ -28,7 +28,7 @@
   /* Custom Banner Image */
   /* User provided: public/banner.PNG */
   background-image: url('/banner.PNG');
-  background-size: 100vw 100%;
+  background-size: auto 100%;
   /* Force width to match viewport for seamless loop */
   background-position: 0 0;
   background-repeat: repeat-x;
@@ -470,7 +470,7 @@
   }
 
   to {
-    background-position-x: 100vw;
+    background-position-x: 10000px;
   }
 }
 

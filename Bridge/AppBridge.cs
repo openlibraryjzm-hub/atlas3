@@ -23,6 +23,9 @@ namespace Atlas3.Bridge
         // Event to notify MainWindow of browser mode changes
         public event EventHandler<string>? BrowserModeChanged;
 
+        // Events to notify MainWindow of window control actions (Layer 1 UI)
+        public event EventHandler<string>? WindowCommandRequested;
+
         public AppBridge(DatabaseService dbService, CoreWebView2 webView)
         {
             _dbService = dbService;
@@ -47,6 +50,27 @@ namespace Atlas3.Bridge
                 // ROUTING LOGIC (The "Switchboard")
                 switch (message.Command)
                 {
+                    // --- Window Controls (Layer 1 banner) ---
+                    case "window_minimize":
+                        WindowCommandRequested?.Invoke(this, "minimize");
+                        result = true;
+                        break;
+
+                    case "window_toggle_maximize":
+                        WindowCommandRequested?.Invoke(this, "toggle_maximize");
+                        result = true;
+                        break;
+
+                    case "window_close":
+                        WindowCommandRequested?.Invoke(this, "close");
+                        result = true;
+                        break;
+
+                    case "window_drag":
+                        WindowCommandRequested?.Invoke(this, "drag");
+                        result = true;
+                        break;
+
                     // --- Playlists ---
                     case "get_all_playlists":
                         result = _dbService.GetAllPlaylists();

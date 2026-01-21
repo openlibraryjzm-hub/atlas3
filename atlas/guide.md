@@ -5,6 +5,8 @@ Atlas 3 moves away from managing multiple native windows or fighting with framew
 
 **The C# Host is the Boss.** It controls visibility, layout, and Z-ordering. The layers do not fight; they obey.
 
+**Important UI constraint:** WebView2 is a heavyweight HWND (“airspace”). This means WPF cannot reliably draw a truly transparent overlay on top of it. Any “title bar” UI that must visually overlay web content should be implemented *inside the WebView* (Layer 1) and forwarded to the host via the bridge.
+
 ---
 
 ## 2. The Three Layers
@@ -17,6 +19,7 @@ Atlas 3 moves away from managing multiple native windows or fighting with framew
     *   Always at the bottom of the stack (`Grid.Row="0"`).
     *   In **Normal Mode**, it spans the full width.
     *   In **Split Mode**, it is "squashed" to the Left Column (50% width). **Crucially**, the React frontend is programmed to hide its own side menus (Playlists/Videos Grid) in this state, ensuring Layer 1 only displays the active player/navigation, effectively treating the browser as the primary "page".
+    *   **Window Controls**: Minimize/Maximize/Close and “drag to move window” are implemented in the **Layer 1 banner UI** and dispatched to the C# host via WebView2 messaging (not via a WPF overlay).
 
 ### Layer 2: The Browser (Middle)
 *   **Documentation:** [Detailed Guide](browser_layer.md)
@@ -48,6 +51,9 @@ WebView2 and Mpv.NET are "heavyweight" native controls (HWNDs). They inherently 
     *   When Layer 3 (MPV) is up, we hide underneath layers if necessary.
     *   When Layer 2 (Browser) is Full Screen, we `Collapse` Layer 1.
     *   **Split Screen Fix:** We do **NOT** overlap Layer 2 on Layer 1. We use a Grid with 2 Columns. Layer 1 gets Col 0, Layer 2 gets Col 1. This prevents "Z-Fighting" and flickering.
+
+### Borderless Host Window Notes
+The host window is borderless (`WindowStyle=None`) for a modern look. In practice, Windows/DWM may still present a thin OS border/shadow in some states. This is acceptable for now in exchange for stability (resize hit-testing + taskbar-aware maximize).
 
 ### C# Backend transition
 *   **Old Architecture:** Rust Backend + Tauri Frontend.

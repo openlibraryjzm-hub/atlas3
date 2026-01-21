@@ -20,13 +20,15 @@ The browser layer supports dynamic resizing and positioning managed by `MainWind
     *   Uses a standard WPF `TabControl`.
     *   Each tab hosts its own independent `WebView2` instance.
     *   Tabs show the current page title dynamically.
+    *   **New Tab UX**: A dedicated right-most **“+” tab** creates new tabs (instead of a toolbar button).
+    *   **Close Tab UX**: Each tab header contains its own close **“x”** button (instead of a global “close tab” button).
 2.  **"Browser-as-a-Page" Integration**:
     *   The browser is integrated into the Layer 1 navigation flow.
     *   **Activation**: Clicking the `Monitor icon` in `TopNavigation.jsx` triggers `Split Mode`, hides Layer 1 side menus (Playlists/Videos), and sets the browser visibility state.
     *   **Deactivation**: Interacting with any Layer 1 navigation (e.g., clicking 'Playlists', 'Videos', or 'History' tabs) automatically sends a signal to hide the browser and restore the full video app view.
-3.  **Persistent Sessions**:
-    *   All WebView2 instances share a persistent User Data Folder located at `browser_profile/` in the application root.
-    *   **Benefit**: Cookies, logins (Gmail, YouTube), and cache are preserved between app restarts.
+3.  **Hide Browser (Top-Right)**:
+    *   The browser toolbar contains a top-right **“×”** button to **hide Layer 2**.
+    *   Implementation detail: `BrowserOverlay` raises a `HideRequested` event, and `MainWindow` responds by switching to **Hide Mode**.
 4.  **Deferred Initialization (Crucial)**:
     *   WebView2 **cannot** initialize correctly if it is created while invisible (Collapsed).
     *   **Solution**: The `BrowserOverlay` listens for `IsVisibleChanged`. It only spawns the initial tab/WebView when the layer is visibly toggled on by the user.
@@ -44,14 +46,10 @@ The code-behind logic.
 *   **`UpdateNavButtons()`**: Checks `CoreWebView2.CanGoBack` / `CanGoForward` to toggle button states.
 *   **`BrowserOverlay_IsVisibleChanged`**: The entry point that triggers the first tab creation.
 
-## "Memory" and Persistence
-To ensure users stay logged in:
-```csharp
-_userDataFolder = Path.Combine(AppContext.BaseDirectory, "browser_profile");
-var env = await CoreWebView2Environment.CreateAsync(null, _userDataFolder);
-await webView.EnsureCoreWebView2Async(env);
-```
-This forces all tabs to write to the same disk location, effectively mimicking a standard browser profile.
+## "Memory" and Persistence (Current vs Planned)
+**Current implementation**: Tabs use the default WebView2 environment (`EnsureCoreWebView2Async(null)`), which is the simplest/stablest baseline during the port.
+
+**Planned enhancement**: If we want Chrome-like persistence (cookies/logins/cache), move tabs to a shared user data folder such as `browser_profile/` under the app directory via a shared `CoreWebView2Environment`.
 
 ## Future Roadmap (Agent Onboarding)
 *   **Extensions**: To add Chrome-like extensions, you will interact with `CoreWebView2.Profile.AddBrowserExtensionAsync`.

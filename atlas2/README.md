@@ -34,6 +34,8 @@ This directory contains comprehensive documentation for the YouTube TV v2 (yttv2
 - **NAudio** - Audio Visualization (Ported from `cpal`)
 - **ASP.NET Core / HttpListener** - Local Video Streaming (Ported from `axum`)
 
+**Host window note (WPF port):** the app runs in a borderless WPF window; window controls (min/max/close + drag-to-move) are implemented in the Layer 1 banner UI and forwarded to the host via WebView2 messaging.
+
 ### Legacy Reference (Rust/Tauri)
 *The following are present in the repo but serve only as logic references:*
 - **Tauri 2**

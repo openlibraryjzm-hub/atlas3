@@ -14,6 +14,10 @@ namespace Atlas3.Controls
     public partial class BrowserOverlay : UserControl
     {
         private string _userDataFolder;
+        private TabItem? _addTabItem;
+        private bool _handlingAddTabSelection;
+
+        public event EventHandler? HideRequested;
 
         public BrowserOverlay()
         {
@@ -31,18 +35,65 @@ namespace Atlas3.Controls
             if (this.Visibility == Visibility.Visible && !_hasInitialized)
             {
                 _hasInitialized = true;
+                EnsureAddTabItemExists();
                 AddNewTab();
             }
         }
 
+        private void EnsureAddTabItemExists()
+        {
+            if (_addTabItem != null)
+                return;
+
+            _addTabItem = new TabItem
+            {
+                Header = "+",
+                Tag = "AddTab",
+                ToolTip = "New Tab"
+            };
+
+            // Always keep this as the last tab.
+            BrowserTabs.Items.Add(_addTabItem);
+        }
+
         private async void AddNewTab(string url = "https://google.com")
         {
+            EnsureAddTabItemExists();
+
             var tab = new TabItem();
-            tab.Header = "Loading...";
+            tab.Tag = "BrowserTab";
+
+            // Header UI: title + close button (per-tab close)
+            var headerPanel = new DockPanel { LastChildFill = true };
+            var closeBtn = new System.Windows.Controls.Button
+            {
+                Content = "x",
+                Style = (Style)Resources["TabCloseButtonStyle"],
+                Tag = tab,
+                ToolTip = "Close Tab"
+            };
+            closeBtn.Click += TabClose_Click;
+            DockPanel.SetDock(closeBtn, Dock.Right);
+
+            var titleText = new TextBlock
+            {
+                Text = "Loading...",
+                Foreground = System.Windows.Media.Brushes.White,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                MaxWidth = 180,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+
+            headerPanel.Children.Add(closeBtn);
+            headerPanel.Children.Add(titleText);
+            tab.Header = headerPanel;
 
             var webView = new WebView2();
             tab.Content = webView;
-            BrowserTabs.Items.Add(tab);
+
+            // Insert before the "+" tab so the add-tab is always right-most.
+            var insertIndex = Math.Max(0, BrowserTabs.Items.Count - 1);
+            BrowserTabs.Items.Insert(insertIndex, tab);
             BrowserTabs.SelectedItem = tab; // Switch to it so it becomes visible within the TabControl
 
             try 
@@ -55,8 +106,16 @@ namespace Atlas3.Controls
                 {
                     webView.CoreWebView2.DocumentTitleChanged += (s, e) => 
                     {
-                        tab.Header = webView.CoreWebView2.DocumentTitle;
+                        Dispatcher.Invoke(() =>
+                        {
+                            titleText.Text = string.IsNullOrWhiteSpace(webView.CoreWebView2.DocumentTitle)
+                                ? "New Tab"
+                                : webView.CoreWebView2.DocumentTitle;
+                        });
                     };
+                    webView.SourceChanged += WebView_SourceChanged;
+                    webView.NavigationCompleted += WebView_NavigationCompleted;
+                    webView.CoreWebView2InitializationCompleted += WebView_CoreWebView2InitializationCompleted;
                     webView.Source = new Uri(url);
                 }
             }
@@ -81,24 +140,38 @@ namespace Atlas3.Controls
         {
             if (BrowserTabs.SelectedItem is TabItem selectedTab)
             {
-                if (selectedTab.Content is WebView2 webView)
-                {
-                    webView.Dispose();
-                }
-                
-                BrowserTabs.Items.Remove(selectedTab);
-                
-                // If no tabs left, create one
-                if (BrowserTabs.Items.Count == 0)
-                {
-                    AddNewTab();
-                }
+                CloseTab(selectedTab);
+            }
+        }
+
+        private void CloseTab(TabItem tab)
+        {
+            // Never close the "+" tab
+            if (ReferenceEquals(tab, _addTabItem))
+                return;
+
+            if (tab.Content is WebView2 webView)
+            {
+                webView.Dispose();
+            }
+
+            BrowserTabs.Items.Remove(tab);
+
+            // Ensure the "+" tab still exists
+            EnsureAddTabItemExists();
+
+            // If no real tabs left (only "+" remains), create one.
+            if (BrowserTabs.Items.Count == 1 && ReferenceEquals(BrowserTabs.Items[0], _addTabItem))
+            {
+                AddNewTab();
             }
         }
 
         private WebView2? GetCurrentWebView()
         {
-            if (BrowserTabs.SelectedItem is TabItem selectedTab && selectedTab.Content is WebView2 webView)
+            if (BrowserTabs.SelectedItem is TabItem selectedTab &&
+                !ReferenceEquals(selectedTab, _addTabItem) &&
+                selectedTab.Content is WebView2 webView)
             {
                 return webView;
             }
@@ -141,18 +214,25 @@ namespace Atlas3.Controls
 
         // --- Event Handlers ---
 
-        private void NewTab_Click(object sender, RoutedEventArgs e)
-        {
-            AddNewTab();
-        }
-
-        private void CloseTab_Click(object sender, RoutedEventArgs e)
-        {
-            CloseCurrentTab();
-        }
-
         private void BrowserTabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            // If the user clicks the "+" tab, immediately create a real tab and select it.
+            if (!_handlingAddTabSelection &&
+                BrowserTabs.SelectedItem is TabItem selected &&
+                ReferenceEquals(selected, _addTabItem))
+            {
+                try
+                {
+                    _handlingAddTabSelection = true;
+                    AddNewTab();
+                }
+                finally
+                {
+                    _handlingAddTabSelection = false;
+                }
+                return;
+            }
+
             UpdateAddressBar();
             UpdateNavButtons();
         }
@@ -212,6 +292,19 @@ namespace Atlas3.Controls
                     wv.Source = uri;
                 }
             }
+        }
+
+        private void TabClose_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button btn && btn.Tag is TabItem tab)
+            {
+                CloseTab(tab);
+            }
+        }
+
+        private void HideBrowser_Click(object sender, RoutedEventArgs e)
+        {
+            HideRequested?.Invoke(this, EventArgs.Empty);
         }
     }
 }
