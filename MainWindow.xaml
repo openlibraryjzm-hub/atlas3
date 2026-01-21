@@ -1,0 +1,57 @@
+﻿<Window x:Class="Atlas3.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Atlas3"
+        xmlns:controls="clr-namespace:Atlas3.Controls"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        mc:Ignorable="d"
+        Title="Atlas 3 - Triple Layer Architecture" Height="720" Width="1280" Background="#1a1a1a">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- We use a Grid for the main content area with 2 columns to support Split Screen -->
+        <Grid x:Name="MainContentGrid" Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" x:Name="LeftCol"/> <!-- Tauri usually lives here -->
+                <ColumnDefinition Width="0" x:Name="RightCol"/> <!-- Browser lives here in Split Mode -->
+            </Grid.ColumnDefinitions>
+
+            <!-- LAYER 1: The Main Application (Tauri) -->
+            <!-- We let it span across both columns so it's "Full Width" normally. 
+                 In Split mode, we might want to restrict it to Col 0 if we want true split, 
+                 or let it stay full width to be "overlapped". 
+                 Let's stick to the User's "Overlap" request => ColumnSpan=2 -->
+            <wv2:WebView2 x:Name="AppWebView" Grid.Column="0" Grid.ColumnSpan="2" />
+
+            <!-- LAYER 2: The Mock Browser (Tabs) -->
+            <!-- We place this in Column 1 for Split, or ColumnSpan 2 for Fullscreen. -->
+            <controls:BrowserOverlay x:Name="BrowserLayer" 
+                                           Visibility="Collapsed" 
+                                           Grid.Column="1" 
+                                           Grid.ColumnSpan="1"/>
+
+            <!-- LAYER 3: MPV Player (Top Overlay) -->
+            <!-- Spans everything -->
+            <Grid x:Name="MpvLayer" Visibility="Collapsed" Grid.Column="0" Grid.ColumnSpan="2" Background="Black" Panel.ZIndex="999">
+                 <TextBlock Text="MPV PLAYER (LAYER 3)" Foreground="Red" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="30"/>
+            </Grid>
+        </Grid>
+
+        <!-- DEBUG CONTROLS (ROW 1) -->
+        <Border Grid.Row="1" Background="#333333" Padding="10">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                 <TextBlock Text="MODES: " Foreground="White" VerticalAlignment="Center" Margin="0,0,10,0" FontWeight="Bold"/>
+                 <Button Content="Show Browser (Split)" Click="ModeSplit_Click" Padding="10,5" Margin="5"/>
+                 <Button Content="Show Browser (Full)" Click="ModeFull_Click" Padding="10,5" Margin="5"/>
+                 <Button Content="Hide Browser" Click="ModeHide_Click" Padding="10,5" Margin="5"/>
+                 <TextBlock Text=" | " Foreground="Gray" VerticalAlignment="Center"/>
+                 <Button Content="Toggle MPV" Click="ToggleMpv_Click" Padding="10,5" Margin="5"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

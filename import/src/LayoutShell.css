@@ -1,0 +1,536 @@
+/* Cool Light Blue Pattern Variable */
+:root {
+  --cool-blue-pattern: repeating-linear-gradient(45deg,
+      #bae6fd,
+      /* Sky 200 */
+      #bae6fd 10px,
+      #7dd3fc 10px,
+      /* Sky 300 */
+      #7dd3fc 20px);
+}
+
+/* LayoutShell.css */
+.layout-shell {
+  display: grid;
+  height: 100vh;
+  width: 100vw;
+  background: transparent;
+  grid-template-rows: auto 1fr;
+  grid-template-columns: 1fr;
+  overflow: hidden;
+}
+
+/* Top Controller - Fixed at top */
+.layout-shell__top-controller {
+  grid-row: 1;
+  grid-column: 1 / -1;
+  height: 200px;
+  /* Custom Banner Image */
+  /* User provided: public/banner.PNG */
+  background-image: url('/banner.PNG');
+  background-size: 100vw 100%;
+  /* Force width to match viewport for seamless loop */
+  background-position: 0 0;
+  background-repeat: repeat-x;
+  animation: bannerScrollRight 60s linear infinite;
+
+  /* Fallback Gradient if image is missing */
+  background-color: #e0f2fe;
+
+  /* Border removed, using ::after for pattern separator */
+  border-bottom: none;
+
+  position: relative;
+  /* This is the new 'anchor' for the component */
+  /* This is the new 'anchor' for the component */
+  overflow: visible;
+  /* Temporarily hide the mess so we can find center */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+/* Pattern Separator using ::after REMOVED - replaced by real element */
+/* .layout-shell__top-controller::after { ... } */
+
+/* Separator Strip */
+.layout-shell__separator {
+  position: absolute;
+  bottom: 0px;
+  left: 0;
+  width: 100%;
+  height: 12px;
+  z-index: 10;
+  /* background handled by pattern class in JSX */
+}
+
+/* Wrapper for top controller content */
+.layout-shell__top-controller-wrapper {
+  z-index: 2;
+  /* Ensure content sits above bleed */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: visible;
+}
+
+/* Prevent the internal component from breaking the layout */
+.layout-shell__top-controller-wrapper>* {
+  max-width: 100%;
+  max-height: 100%;
+  position: relative;
+}
+
+/* General Player Container Styles - specific border/padding */
+.layout-shell__player {
+  background-color: transparent;
+  /* Transparent to match top border effect */
+  /* Matches user's picked color for left side */
+  /* Dark Blue Border */
+  /* Remove top padding so the top-controller separator acts as the top border */
+  /* Side and Bottom borders removed per request (padding 0) */
+  padding: 0;
+  /* Border thickness - creates the "scaled down" look */
+  box-sizing: border-box;
+  /* Shadow removed for clean look */
+  box-shadow: none;
+  /* Ensure it sits below top controller (z-index: 100) */
+  position: relative;
+  z-index: 50;
+}
+
+/* Main Content Area */
+.layout-shell__content {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  display: grid;
+  position: relative;
+  overflow: hidden;
+  transition: grid-template-columns 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    grid-template-rows 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Vertical Bleed Seam REMOVED */
+/* .layout-shell--half .layout-shell__content::after { ... } */
+
+/* ============================================
+   FULL SCREEN MODE
+   ============================================ */
+.layout-shell--full .layout-shell__content {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+}
+
+.layout-shell--full .layout-shell__player {
+  grid-column: 1;
+  grid-row: 1;
+  width: 100%;
+  height: 100%;
+}
+
+/* ============================================
+   HALF SCREEN MODE
+   ============================================ */
+.layout-shell--half .layout-shell__content {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr;
+}
+
+.layout-shell--half .layout-shell__player {
+  grid-column: 1;
+  grid-row: 1;
+  width: 100%;
+  height: 100%;
+}
+
+.layout-shell--half .layout-shell__side-menu {
+  grid-column: 2;
+  grid-row: 1;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  /* border-left handled by main component padding now */
+  /* border-left: 12px solid #052F4A; */
+  background: transparent;
+}
+
+/* Half Mode with Menu Quarter Mode */
+.layout-shell--half.layout-shell--menu-quarter .layout-shell__content {
+  grid-template-rows: 1fr 1fr;
+}
+
+.layout-shell--half.layout-shell--menu-quarter .layout-shell__menu-spacer {
+  grid-column: 2;
+  grid-row: 1;
+  background: transparent;
+  width: 100%;
+  height: 100%;
+}
+
+.layout-shell--half.layout-shell--menu-quarter .layout-shell__side-menu {
+  grid-column: 2;
+  grid-row: 2;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================
+   QUARTER VIEW MODE - Docked Bottom-Left Player
+   ============================================ */
+.layout-shell--quarter .layout-shell__content {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+/* Empty spacer in top-left for Quarter mode */
+.layout-shell--quarter .layout-shell__spacer {
+  grid-column: 1;
+  grid-row: 1;
+  background: transparent;
+  width: 100%;
+  height: 100%;
+}
+
+.layout-shell--quarter .layout-shell__player {
+  grid-column: 1;
+  grid-row: 2;
+  width: 100%;
+  height: 100%;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.layout-shell--quarter .layout-shell__side-menu {
+  grid-column: 2;
+  grid-row: 1 / -1;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  background: transparent;
+}
+
+/* Quarter Mode with Menu Quarter Mode */
+.layout-shell--quarter.layout-shell--menu-quarter .layout-shell__menu-spacer {
+  grid-column: 2;
+  grid-row: 1;
+  background: transparent;
+  width: 100%;
+  height: 100%;
+}
+
+.layout-shell--quarter.layout-shell--menu-quarter .layout-shell__side-menu {
+  grid-column: 2;
+  grid-row: 2;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Side Menu Structure */
+.layout-shell__side-menu {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+  position: relative;
+  /* Anchor for absolute scroll controls */
+
+  /* Full Border Styling REMOVED based on user preference */
+  /* background-color: #052F4A; */
+  /* padding: 12px; */
+  /* box-sizing: border-box; */
+}
+
+.layout-shell__mini-header {
+  min-height: 60px;
+  height: auto;
+  background: transparent;
+  background: transparent;
+  /* Thicker Top Border REMOVED - Separator handles it now */
+  /* border-top: 4px solid rgb(4, 41, 65); */
+  /* Unified to match left side */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 8px 16px;
+}
+
+.layout-shell__side-menu-content {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ============================================
+   PLACEHOLDER STYLES
+   ============================================ */
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  border: 2px dashed rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.placeholder__label {
+  font-size: 18px;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.9);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+
+.placeholder__subtitle {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.5);
+  text-transform: lowercase;
+  letter-spacing: 0.05em;
+}
+
+/* Placeholder Color Coding */
+.placeholder--top-controller {
+  background: rgba(59, 130, 246, 0.1);
+  /* Blue tint */
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.placeholder--player {
+  background: rgba(34, 197, 94, 0.1);
+  /* Green tint */
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.placeholder--mini-header {
+  background: rgba(168, 85, 247, 0.1);
+  /* Purple tint */
+  border-color: rgba(168, 85, 247, 0.3);
+  min-height: 60px;
+  height: auto;
+}
+
+.placeholder--side-menu {
+  background: rgba(249, 115, 22, 0.1);
+  /* Orange tint */
+  border-color: rgba(249, 115, 22, 0.3);
+}
+
+.placeholder--second-player {
+  background: rgba(251, 191, 36, 0.1);
+  /* Yellow/Amber tint */
+  border-color: rgba(251, 191, 36, 0.3);
+}
+
+/* ============================================
+   DEBUG BOUNDS - Visual Layout Debugging
+   ============================================ */
+.debug-bounds {
+  border: 6px solid !important;
+  outline: 2px solid rgba(255, 255, 255, 0.5) !important;
+  position: relative !important;
+  min-height: 80px !important;
+  min-width: 100px !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.debug-bounds::after {
+  content: attr(data-debug-label);
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background: rgba(255, 255, 255, 0.95);
+  color: black;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-family: monospace;
+  font-weight: bold;
+  z-index: 10000;
+  pointer-events: none;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.debug-bounds--top-controller {
+  border-color: #3b82f6 !important;
+  /* Blue */
+  background: rgba(59, 130, 246, 0.3) !important;
+}
+
+.debug-bounds--player {
+  border-color: #22c55e !important;
+  /* Green */
+  background: rgba(34, 197, 94, 0.3) !important;
+}
+
+.debug-bounds--spacer {
+  border-color: #6b7280 !important;
+  /* Gray */
+  background: rgba(107, 114, 128, 0.3) !important;
+}
+
+.debug-bounds--menu-spacer {
+  border-color: #6b7280 !important;
+  /* Gray */
+  background: rgba(107, 114, 128, 0.3) !important;
+}
+
+.debug-bounds--side-menu {
+  border-color: #f97316 !important;
+  /* Orange */
+  background: rgba(249, 115, 22, 0.3) !important;
+}
+
+.debug-bounds--mini-header {
+  border-color: #a855f7 !important;
+  /* Purple */
+  background: rgba(168, 85, 247, 0.3) !important;
+}
+
+.debug-bounds--side-menu-content {
+  border-color: #ec4899 !important;
+  /* Pink */
+  background: rgba(236, 72, 153, 0.3) !important;
+}
+
+.debug-bounds--second-player {
+  border-color: #fbbf24 !important;
+  /* Amber/Yellow */
+  background: rgba(251, 191, 36, 0.3) !important;
+  overflow: visible !important;
+  z-index: 1000 !important;
+}
+
+.debug-bounds--animated-menu {
+  border-color: #10b981 !important;
+  /* Emerald */
+  background: rgba(16, 185, 129, 0.3) !important;
+}
+
+.layout-shell__animated-menu {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 500;
+  pointer-events: none;
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+}
+
+.layout-shell__animated-menu>* {
+  pointer-events: auto;
+}
+
+/* ============================================
+   SECOND PLAYER - Bottom Left Quarter
+   Only visible in debug mode - hidden by default
+   ============================================ */
+.layout-shell__second-player {
+  /* Hidden by default - only shown in debug mode */
+  display: none;
+}
+
+/* Only show second player when debug bounds are enabled */
+.layout-shell--debug .layout-shell__second-player {
+  display: block;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 50%;
+  height: 50%;
+  z-index: 1000;
+  overflow: hidden;
+  pointer-events: auto;
+  box-sizing: border-box;
+}
+
+/* Ensure second player works in both full and half modes when in debug mode */
+.layout-shell--debug.layout-shell--full .layout-shell__second-player,
+.layout-shell--debug.layout-shell--half .layout-shell__second-player {
+  /* Same positioning for both modes */
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 50%;
+  height: 50%;
+}
+
+/* Infinite Banner Scroll Animation */
+@keyframes bannerScrollRight {
+  from {
+    background-position-x: 0;
+  }
+
+  to {
+    background-position-x: 100vw;
+  }
+}
+
+/* Side Menu Scroll Controls */
+.side-menu-scroll-controls {
+  display: flex;
+  flex-direction: row;
+  /* Horizontal alignment */
+  align-items: center;
+  gap: 8px;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+  pointer-events: auto;
+  margin-right: 8px;
+  /* Space between controls and back button */
+}
+
+.side-menu-scroll-controls:hover {
+  opacity: 1;
+}
+
+.scroll-control-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #052F4A;
+  /* Theme dark blue */
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.scroll-control-btn:hover {
+  background-color: rgba(5, 47, 74, 0.1);
+  transform: scale(1.1);
+}
+
+.scroll-control-dot {
+  width: 4px;
+  height: 4px;
+  background-color: #334155;
+  /* Slate-700 to match TopNav borders */
+  border-radius: 50%;
+  opacity: 0.8;
+  pointer-events: none;
+  /* Let clicks pass to the button wrapper */
+}
+
+/* Button wrapper for the dot to make it easier to click */
+.scroll-control-dot-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  /* Larger hit area */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+}

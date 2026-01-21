@@ -1,0 +1,81 @@
+<UserControl x:Class="Atlas3.Controls.BrowserOverlay"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800"
+             Background="#222">
+    <UserControl.Resources>
+        <!-- TabItem Style (Dark Mode) -->
+        <Style TargetType="TabItem">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border Name="Border" BorderThickness="1,1,1,0" BorderBrush="#444" CornerRadius="5,5,0,0" Margin="2,0" Padding="10,5">
+                            <ContentPresenter x:Name="ContentSite"
+                                            VerticalAlignment="Center"
+                                            HorizontalAlignment="Center"
+                                            ContentSource="Header"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#444" />
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="False">
+                                <Setter TargetName="Border" Property="Background" Value="#222" />
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#333" />
+                                <Setter Property="Foreground" Value="Gray"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- Toolbar -->
+            <RowDefinition Height="*"/>    <!-- Tabs Content -->
+        </Grid.RowDefinitions>
+
+        <!-- Browser Toolbar -->
+        <Border Grid.Row="0" Background="#333" Padding="5">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/> <!-- Nav Buttons -->
+                    <ColumnDefinition Width="*"/>    <!-- Address Bar -->
+                    <ColumnDefinition Width="Auto"/> <!-- Menu/Tools -->
+                </Grid.ColumnDefinitions>
+
+                <!-- Navigation -->
+                <StackPanel Orientation="Horizontal" Grid.Column="0" Margin="0,0,10,0">
+                    <Button x:Name="BtnBack" Content="&lt;" Click="ScanBack_Click" Width="30" Background="#444" Foreground="White" BorderThickness="0" Margin="0,0,2,0"/>
+                    <Button x:Name="BtnForward" Content="&gt;" Click="ScanForward_Click" Width="30" Background="#444" Foreground="White" BorderThickness="0" Margin="0,0,2,0"/>
+                    <Button x:Name="BtnRefresh" Content="R" Click="Reload_Click" Width="30" Background="#444" Foreground="White" BorderThickness="0"/>
+                </StackPanel>
+
+                <!-- Address Bar -->
+                <TextBox x:Name="AddressBar" Grid.Column="1" 
+                         VerticalContentAlignment="Center" Padding="5,2" Background="#222" Foreground="White" BorderThickness="0"
+                         KeyDown="AddressBar_KeyDown" />
+
+                <!-- Toolbar Actions -->
+                <StackPanel Orientation="Horizontal" Grid.Column="2" Margin="10,0,0,0">
+                    <Button Content="Go" Click="Go_Click" Width="30" Background="#444" Foreground="White" BorderThickness="0" Margin="0,0,5,0"/>
+                    <Button Content="+" Click="NewTab_Click" Width="30" Background="#444" Foreground="White" BorderThickness="0" ToolTip="New Tab"/>
+                    <Button Content="x" Click="CloseTab_Click" Width="30" Background="#444" Foreground="White" BorderThickness="0" Margin="5,0,0,0" ToolTip="Close Tab"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Tab Control -->
+        <TabControl x:Name="BrowserTabs" Grid.Row="1" 
+                    Background="#111" BorderThickness="0" 
+                    SelectionChanged="BrowserTabs_SelectionChanged">
+        </TabControl>
+    </Grid>
+</UserControl>
